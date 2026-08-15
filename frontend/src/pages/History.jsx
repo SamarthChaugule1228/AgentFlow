@@ -1,0 +1,10 @@
+import { ArrowRight, ClipboardList, LoaderCircle } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { formApi } from '../services/api';
+
+export default function History() {
+  const [forms, setForms] = useState(null); useEffect(() => { formApi.history().then(setForms).catch(() => setForms([])); }, []);
+  if (!forms) return <div className="grid h-64 place-items-center text-sm text-[#718177]"><LoaderCircle className="animate-spin"/>Loading history…</div>;
+  return <div className="mx-auto max-w-5xl px-9 py-10"><p className="text-xs font-bold uppercase tracking-widest text-[#438b64]">Activity</p><h2 className="mt-2 text-3xl font-bold tracking-[-1.2px]">Form history</h2><p className="mt-2 text-sm text-[#718177]">Your analyzed forms and answer drafts, all in one place.</p><section className="mt-7 overflow-hidden rounded-2xl border border-[#e0e7df] bg-white">{forms.length === 0 ? <div className="grid min-h-64 place-items-center text-center"><div><ClipboardList className="mx-auto text-[#89a698]"/><h3 className="mt-3 text-sm font-bold">No forms yet</h3><Link className="mt-2 inline-block text-xs font-semibold text-[#378359]" to="/dashboard">Analyze your first form →</Link></div></div> : forms.map(form => <Link key={form.id} to={`/forms/${form.id}${form.status === 'draft_ready' || form.status === 'ready_for_review' ? '/review' : ''}`} className="flex items-center gap-4 border-b border-[#edf0eb] px-6 py-5 last:border-0 hover:bg-[#fafcf9]"><span className="grid size-9 place-items-center rounded-lg bg-[#edf8f0] text-[#438d61]"><ClipboardList size={18}/></span><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold">{form.url}</p><p className="mt-1 text-xs text-[#75857a]">{form.questions.length} questions · Updated {new Date(form.updated_at).toLocaleString()}</p></div><span className="rounded-full bg-[#f2f5f1] px-2.5 py-1 text-[10px] font-bold capitalize text-[#5e7467]">{form.status.replaceAll('_', ' ')}</span><ArrowRight size={16} className="text-[#789084]"/></Link>)}</section></div>;
+}

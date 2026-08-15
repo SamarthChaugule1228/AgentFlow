@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "AgentFlow Form Filler",
+  "version": "0.1.0",
+  "description": "Fills reviewed AgentFlow answers into the active Google Form. Never submits forms.",
+  "permissions": ["tabs", "activeTab"],
+  "host_permissions": ["https://docs.google.com/forms/*", "https://forms.gle/*"],
+  "background": { "service_worker": "background.js", "type": "module" },
+  "content_scripts": [{ "matches": ["https://docs.google.com/forms/*"], "js": ["content.js"], "run_at": "document_idle" }],
+  "externally_connectable": { "matches": ["http://localhost/*", "http://127.0.0.1/*"] },
+  "action": { "default_title": "AgentFlow Form Filler" }
+}

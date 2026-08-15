@@ -1,0 +1,23 @@
+import { ArrowRight, MonitorCog, FileSearch, ShieldCheck, Sparkles } from 'lucide-react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { formApi } from '../services/api';
+
+export default function Dashboard() {
+  const [url, setUrl] = useState(''); const [busy, setBusy] = useState(false); const [error, setError] = useState(''); const navigate = useNavigate();
+  const extractQuestions = () => new Promise((resolve, reject) => {
+    const extensionId = import.meta.env.VITE_EXTENSION_ID;
+    if (!extensionId || !window.chrome?.runtime) {
+      reject(new Error('Load the AgentFlow Chrome extension and set VITE_EXTENSION_ID before analyzing a form.'));
+      return;
+    }
+    window.chrome.runtime.sendMessage(extensionId, { type: 'AGENTFLOW_EXTRACT', formUrl: url }, response => {
+      const message = window.chrome.runtime.lastError?.message || response?.message;
+      if (message || !response?.questions?.length) reject(new Error(message || 'No questions were found. Refresh the Google Form and try again.'));
+      else resolve(response.questions);
+    });
+  });
+  const analyze = async () => { setError(''); setBusy(true); try { const questions = await extractQuestions(); const form = await formApi.analyze(url, questions); navigate(`/forms/${form.id}`); } catch (err) { setError(err.message || 'Could not analyze this Google Form.'); } finally { setBusy(false); } };
+  const features = [[FileSearch, 'Analyze questions', 'The extension reads form fields while the API classifies each question.'], [Sparkles, 'Grounded answers', 'Your profile and documents provide context for every drafted answer.'], [ShieldCheck, 'You approve', 'Answers are editable. The extension fills only after your explicit approval.']];
+  return <div className="mx-auto max-w-6xl px-9 py-10"><section className="relative overflow-hidden rounded-3xl bg-[#193126] px-10 py-12 text-white"><div className="absolute -right-24 -top-20 size-80 rounded-full bg-[#2f7954] opacity-50 blur-3xl"/><div className="relative max-w-2xl"><span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-[#a7efc3]"><Sparkles size={13}/> Agentic form assistant</span><h2 className="mt-5 text-4xl font-bold tracking-[-1.8px]">Turn applications into a thoughtful, reviewed workflow.</h2><p className="mt-4 max-w-xl text-sm leading-6 text-[#c9dbcf]">AgentFlow reads a Google Form, retrieves your relevant experience, drafts answers, and stops for your approval.</p></div></section><section className="-mt-5 mx-auto max-w-4xl rounded-2xl border border-[#e0e7df] bg-white p-6 shadow-xl shadow-[#173324]/8"><div className="mb-4 flex items-center gap-3"><span className="grid size-9 place-items-center rounded-lg bg-[#e9f5ed] text-[#33875c]"><FileSearch size={18}/></span><div><h3 className="font-bold">Start a new form</h3><p className="text-xs text-[#77877c]">Paste a public or signed-in Google Forms URL.</p></div></div><div className="flex flex-col gap-2 sm:flex-row"><input value={url} onChange={e => setUrl(e.target.value)} onKeyDown={e => e.key === 'Enter' && analyze()} placeholder="https://docs.google.com/forms/d/..." className="h-12 flex-1 rounded-lg border border-[#dce4dc] px-4 text-sm outline-none ring-[#76bc91] focus:ring-2"/><button onClick={analyze} disabled={busy || !url} className="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-[#3d9b69] px-5 text-sm font-bold text-white enabled:hover:bg-[#32845a] disabled:cursor-not-allowed disabled:bg-[#9bc2aa]">{busy ? 'Analyzing…' : <>Analyze form <ArrowRight size={16}/></>}</button></div>{error && <p className="mt-3 text-xs font-medium text-[#b14b48]">{error}</p>}</section><section className="mt-11 grid gap-4 md:grid-cols-3">{features.map(([Icon, title, copy]) => <article key={title} className="rounded-xl border border-[#e3e9e2] bg-white p-5"><span className="grid size-9 place-items-center rounded-lg bg-[#eff7f1] text-[#3e9768]"><Icon size={18}/></span><h3 className="mt-4 text-sm font-bold">{title}</h3><p className="mt-2 text-xs leading-5 text-[#718177]">{copy}</p></article>)}</section><section className="mt-9 flex items-center gap-4 rounded-xl border border-[#dce9df] bg-[#edf8f0] p-5"><MonitorCog className="text-[#3d9b69]"/><div><h3 className="text-sm font-bold">Chrome extension needed for form filling</h3><p className="mt-1 text-xs text-[#668071]">The extension works only in your authenticated browser and never submits on its own.</p></div><button className="ml-auto whitespace-nowrap text-xs font-bold text-[#2c8056]">Set up extension →</button></section></div>;
+}
