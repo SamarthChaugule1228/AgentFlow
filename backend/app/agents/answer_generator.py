@@ -164,9 +164,11 @@ Return valid JSON only: {{"answer":"...","confidence":0.0,"needs_user_input":fal
 Question: {question.label}
 Classification: {evidence['classification']}
 Form context: {evidence['form_title']} | {evidence['section_title']} | neighbors: {evidence['neighboring_questions']}
-Structured evidence (highest priority): {evidence['structured']}
-Document evidence (reference only): {evidence['vector']}
-Rules: answer the question directly; do not copy document text verbatim; do not expose OCR/PDF text; do not invent facts; omit irrelevant fields; use a concise answer; return needs_user_input=true with an empty answer if evidence is insufficient. {'Use only structured evidence.' if strict else ''}"""
+Priority order:
+1. Document evidence and user-provided extra info: {evidence['vector']}
+2. Structured profile evidence: {evidence['structured']}
+3. Approved prior answers if needed
+Rules: answer the question directly; prefer concrete document facts over generic profile text; do not copy document text verbatim; do not expose OCR/PDF text; do not invent facts; omit irrelevant fields; use a concise answer; return needs_user_input=true with an empty answer if evidence is insufficient. {'Use only structured evidence.' if strict else ''}"""
     try:
         from google import genai
         response = genai.Client(api_key=settings.gemini_api_key).models.generate_content(model=settings.gemini_model, contents=prompt)

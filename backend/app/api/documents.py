@@ -1,6 +1,6 @@
 import io
 import logging
-from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from docx import Document
 import fitz
 from ..services.store import add_document, user_id
@@ -12,7 +12,7 @@ router = APIRouter(prefix="/api/documents", tags=["documents"])
 logger = logging.getLogger("uvicorn.error")
 
 @router.post("/upload")
-async def upload(file: UploadFile = File(...)):
+async def upload(file: UploadFile = File(...), email: str | None = Form(None)):
     if file.content_type not in {"application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "text/plain"}:
         raise HTTPException(415, "Upload a PDF, DOCX, or TXT file.")
     raw = await file.read()
@@ -27,9 +27,11 @@ async def upload(file: UploadFile = File(...)):
     text = clean_document_text(text)
     if not text.strip():
         raise HTTPException(422, "No readable text was found in this document.")
-    record = add_document(file.filename or "document", file.content_type, text, extract_structured_resume(text))
+    owner_email = (email or "").strip().lower() or None
+    record = add_document(file.filename or "document", file.content_type, text, extract_structured_resume(text), owner_email)
     chunks = chunk_document(text)
-    record["indexed_chunks"] = index_document_chunks(user_id(), record["id"], record["filename"], chunks)
-    record["pinecone_upserted_chunks"] = upsert_document_chunks(user_id(), record["id"], record["filename"], chunks, chunk_sections(chunks))
-    logger.info("Document upload | filename=%s | chunks=%s | Pinecone upserted=%s", record["filename"], len(chunks), record["pinecone_upserted_chunks"])
+    owner_id = user_id(owner_email)
+    record["indexed_chunks"] = index_document_chunks(owner_id, record["id"], record["filename"], chunks)
+    record["pinecone_upserted_chunks"] = upsert_document_chunks(owner_id, record["id"], record["filename"], chunks, chunk_sections(chunks))
+    logger.info("Document upload | user=%s | filename=%s | chunks=%s | Pinecone upserted=%s", owner_id, record["filename"], len(chunks), record["pinecone_upserted_chunks"])
     return record

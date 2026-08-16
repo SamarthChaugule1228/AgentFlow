@@ -1,16 +1,13 @@
-import { User, Mail, Phone, MapPin, Award, Briefcase, FileText, BookOpen, Upload, CheckCircle2, Loader } from 'lucide-react';
-import { useRef, useState, useEffect } from 'react';
+import { User, Mail, Phone, MapPin, Award, Briefcase, FileText, BookOpen, Loader } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { Button, Card, Input } from '../components/ui';
-import { documentApi, profileApi } from '../services/api';
+import { profileApi } from '../services/api';
 
 export default function ProfileNew() {
   const [profile, setProfile] = useState(null);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [uploadStatus, setUploadStatus] = useState('');
   const [formData, setFormData] = useState({});
-  const fileInputRef = useRef(null);
 
   useEffect(() => {
     profileApi.get().then(setProfile).catch(console.error);
@@ -48,26 +45,6 @@ export default function ProfileNew() {
     }
   };
 
-  const handleDocumentUpload = async (event) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    setUploading(true);
-    setUploadStatus('');
-    try {
-      await documentApi.upload(file);
-      setUploadStatus('Document uploaded successfully.');
-      const refreshed = await profileApi.get();
-      setProfile(refreshed);
-    } catch (error) {
-      console.error('Failed to upload document', error);
-      setUploadStatus('Unable to upload document. Please try again.');
-    } finally {
-      setUploading(false);
-      event.target.value = '';
-    }
-  };
-
   if (!profile) {
     return <div className="grid h-96 place-items-center"><Loader className="animate-spin text-[#3d9b69]"/></div>;
   }
@@ -88,7 +65,7 @@ export default function ProfileNew() {
           <div>
             <p className="text-xs font-bold uppercase tracking-widest text-[#4a8564] mb-3">Profile</p>
             <h1 className="text-4xl font-bold tracking-tight">Your AI Knowledge Profile</h1>
-            <p className="text-[#66776d] mt-2">Manage your profile data used across form analysis and answer generation</p>
+            <p className="text-[#66776d] mt-2">Manage your personal information and profile data used across form analysis</p>
           </div>
           <Button onClick={() => { setEditing(!editing); if (!editing) setFormData(profile); }} variant={editing ? 'secondary' : 'primary'}>
             {editing ? 'Cancel' : 'Edit Profile'}
@@ -208,29 +185,6 @@ export default function ProfileNew() {
                   ))}
                 </div>
               )}
-            </div>
-          </Card>
-
-          {/* Documents */}
-          <Card>
-            <div className="border-b border-[#e5e9e2] px-6 py-4 flex items-center gap-3">
-              <FileText size={20} className="text-[#3d9b69]"/>
-              <h2 className="font-bold">Documents</h2>
-            </div>
-            <div className="p-6">
-              <input ref={fileInputRef} type="file" accept=".pdf,.doc,.docx,.txt" className="hidden" onChange={handleDocumentUpload}/>
-              <div
-                onClick={() => fileInputRef.current?.click()}
-                onKeyDown={(event) => event.key === 'Enter' && fileInputRef.current?.click()}
-                role="button"
-                tabIndex={0}
-                className="rounded-lg border-2 border-dashed border-[#d4e4d8] p-8 text-center transition hover:border-[#3d9b69] hover:bg-[#f5faf6] cursor-pointer"
-              >
-                <Upload size={32} className="mx-auto mb-2 text-[#3d9b69]"/>
-                <p className="font-semibold mb-1">{uploading ? 'Uploading...' : 'Upload Resume or Documents'}</p>
-                <p className="text-xs text-[#66776d]">Drag and drop or click to browse</p>
-              </div>
-              {uploadStatus && <p className="mt-3 text-xs text-[#4a8564]">{uploadStatus}</p>}
             </div>
           </Card>
 

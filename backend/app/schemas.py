@@ -28,6 +28,8 @@ class ProfileUpdate(BaseModel):
     certifications: list[str] = []
     achievements: list[str] = []
     links: list[str] = []
+    extra_info: str = ""
+    uploaded_documents: list[dict] = []
 
 
 class FormQuestion(BaseModel):

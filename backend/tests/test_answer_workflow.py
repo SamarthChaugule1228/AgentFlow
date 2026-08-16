@@ -1,6 +1,6 @@
 import unittest
 from copy import deepcopy
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from app.agents.answer_critic import critic
 from app.agents.graph import run_answer_flow
@@ -10,6 +10,7 @@ from app.services import store
 
 class AnswerWorkflowTests(unittest.TestCase):
     def setUp(self):
+        store.set_active_user("demo-user")
         self.profiles = deepcopy(store.profiles)
         self.documents = deepcopy(store.documents)
         self.forms = deepcopy(store.forms)
@@ -30,6 +31,20 @@ class AnswerWorkflowTests(unittest.TestCase):
     def generated(self, label, question_type="long_text"):
         question = FormQuestion(id="q", label=label, type=question_type, required=True)
         return run_answer_flow([question])[0]
+
+    def test_register_persists_users_in_mongodb_when_configured(self):
+        collection = MagicMock()
+        settings = type("Settings", (), {"mongodb_uri": "mongodb://localhost:27017/agentflow", "mongodb_database": "agentflow"})()
+        with patch("app.services.store.settings", settings), patch("app.services.store._mongo_collection", return_value=collection):
+            created = store.create_user("New User", "new@example.com", "secret123")
+            collection.replace_one.assert_called_once()
+            self.assertEqual(created["email"], "new@example.com")
+            self.assertIn("new@example.com", store.users)
+
+    def test_profile_uses_registered_user_email_key(self):
+        profile = store.get_profile("registered@example.com")
+        self.assertEqual(profile["email"], "registered@example.com")
+        self.assertEqual(profile["full_name"], "Aarav Sharma")
 
     def test_direct_profile_question(self):
         result = self.generated("Full name", "short_text")

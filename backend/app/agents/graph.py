@@ -5,6 +5,7 @@ from typing import Literal, TypedDict
 from langgraph.graph import END, START, StateGraph
 
 from ..schemas import FormQuestion
+from ..services.store import set_active_user
 from .answer_critic import critic
 from .answer_generator import synthesize_answer
 from .question_classifier import classify
@@ -119,4 +120,9 @@ answer_workflow = workflow_builder.compile()
 
 def run_answer_flow(questions: list[FormQuestion], form_context: dict | None = None) -> list[FormQuestion]:
     context = form_context or {}
+    user_email = (context.get("user_email") or "").strip().lower() or None
+    if user_email:
+        set_active_user(user_email)
+    else:
+        set_active_user("demo-user")
     return [answer_workflow.invoke({"question": question, "questions": questions, "question_index": index, "supplied_form_context": context, "regeneration_attempts": 0})["completed"] for index, question in enumerate(questions)]

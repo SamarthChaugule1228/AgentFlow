@@ -24,20 +24,59 @@ export const authApi = {
   }),
 };
 
+const currentUser = () => {
+  try {
+    return JSON.parse(localStorage.getItem('user') || '{}');
+  } catch {
+    return {};
+  }
+};
+
 export const profileApi = {
-  get: () => api.get('/profile').then(({ data }) => data),
-  save: (profile) => api.put('/profile', profile).then(({ data }) => data),
+  get: () => {
+    const user = currentUser();
+    return api.get('/profile', { params: { email: user.email || '' } }).then(({ data }) => data);
+  },
+  save: (profile) => {
+    const user = currentUser();
+    const payload = { ...profile, email: profile.email || user.email || '' };
+    return api.put('/profile', payload, { params: { email: payload.email } }).then(({ data }) => data);
+  },
 };
 
 export const formApi = {
-  analyze: (url, questions = []) => api.post('/forms/analyze', { url, questions }).then(({ data }) => data),
-  generate: (formId, questions) => api.post('/forms/generate', { form_id: formId, questions }).then(({ data }) => data),
-  validate: (formId, questions) => api.post('/forms/validate', { form_id: formId, questions }).then(({ data }) => data),
-  recordExecution: (formId, status) => api.post(`/forms/${formId}/execution`, { status }).then(({ data }) => data),
-  history: () => api.get('/forms/history').then(({ data }) => data),
-  get: (formId) => api.get(`/forms/${formId}`).then(({ data }) => data),
+  analyze: (url, questions = []) => {
+    const user = currentUser();
+    return api.post('/forms/analyze', { url, questions }, { params: { email: user.email || '' } }).then(({ data }) => data);
+  },
+  generate: (formId, questions) => {
+    const user = currentUser();
+    return api.post('/forms/generate', { form_id: formId, questions }, { params: { email: user.email || '' } }).then(({ data }) => data);
+  },
+  validate: (formId, questions) => {
+    const user = currentUser();
+    return api.post('/forms/validate', { form_id: formId, questions }, { params: { email: user.email || '' } }).then(({ data }) => data);
+  },
+  recordExecution: (formId, status) => {
+    const user = currentUser();
+    return api.post(`/forms/${formId}/execution`, { status }, { params: { email: user.email || '' } }).then(({ data }) => data);
+  },
+  history: () => {
+    const user = currentUser();
+    return api.get('/forms/history', { params: { email: user.email || '' } }).then(({ data }) => data);
+  },
+  get: (formId) => {
+    const user = currentUser();
+    return api.get(`/forms/${formId}`, { params: { email: user.email || '' } }).then(({ data }) => data);
+  },
 };
 
 export const documentApi = {
-  upload: (file) => { const body = new FormData(); body.append('file', file); return api.post('/documents/upload', body).then(({ data }) => data); },
+  upload: (file) => {
+    const user = currentUser();
+    const body = new FormData();
+    body.append('file', file);
+    if (user.email) body.append('email', user.email);
+    return api.post('/documents/upload', body).then(({ data }) => data);
+  },
 };

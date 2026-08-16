@@ -6,6 +6,7 @@ import FormAnalysisNew from './pages/FormAnalysisNew';
 import ReviewAnswersNew from './pages/ReviewAnswersNew';
 import HistoryNew from './pages/HistoryNew';
 import ProfileNew from './pages/ProfileNew';
+import InformationNew from './pages/InformationNew';
 import Login from './pages/Login';
 import Register from './pages/Register';
 
@@ -29,6 +30,7 @@ export default function App() {
     <Route element={<ProtectedRoute><LayoutNew/></ProtectedRoute>}>
       <Route path="/dashboard" element={<DashboardNew/>}/>
       <Route path="/profile" element={<ProfileNew/>}/>
+      <Route path="/information" element={<InformationNew/>}/>
       <Route path="/history" element={<HistoryNew/>}/>
       <Route path="/forms/:formId" element={<FormAnalysisNew/>}/>
       <Route path="/forms/:formId/review" element={<ReviewAnswersNew/>}/>

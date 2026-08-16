@@ -24,11 +24,11 @@ def structured_retriever(question: FormQuestion, classification: str) -> list[di
     profile = get_profile()
     results = []
     profile_keys = {
-        "personal": ("full_name",), "contact": ("email", "phone", "address", "location", "links"),
-        "education": ("education", "diploma_percentage", "diploma_name", "degree_name", "college_name"), "experience": ("experience",), "skills": ("skills",),
-        "project": ("projects",), "achievement": ("achievements", "certifications"),
-        "open_ended": ("full_name", "headline", "experience", "skills", "projects", "education", "achievements"),
-    }.get(classification, ())
+        "personal": ("full_name", "extra_info"), "contact": ("email", "phone", "address", "location", "links"),
+        "education": ("education", "diploma_percentage", "diploma_name", "degree_name", "college_name", "extra_info"), "experience": ("experience", "extra_info"), "skills": ("skills", "extra_info"),
+        "project": ("projects", "extra_info"), "achievement": ("achievements", "certifications", "extra_info"),
+        "open_ended": ("full_name", "headline", "experience", "skills", "projects", "education", "achievements", "extra_info"),
+    }.get(classification, ("extra_info",))
     values = {key: profile.get(key) for key in profile_keys if profile.get(key)}
     if values:
         results.append({"source": "profile", "kind": "structured_profile", "data": values})
